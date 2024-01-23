@@ -1,0 +1,28 @@
+<script defer>
+  (function() {
+    const cartItems = {{ cart.items | json }};
+    const volumeDiscount = {{ shop.metafields.discounts.volume-discount.value | json }};
+    const format = {{ shop.money_format | json }};
+    const currentTemplate = {{ template.name | json }};
+    const productId = {{ product.id | json }};
+    let variantId = {{ product.selected_or_first_available_variant.id | json }};
+
+    window.DiscountPrototype = {
+      cartItems: cartItems,
+      volumeDiscount: volumeDiscount,
+      format: format,
+      currentTemplate: currentTemplate,
+      productId: productId,
+      variantId: variantId
+    };
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Abra discounts",
+  "javascript": "app.js",
+  "target": "head"
+}
+{% endschema %}
+

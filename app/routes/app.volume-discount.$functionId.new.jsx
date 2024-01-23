@@ -60,6 +60,21 @@ export const action = async ({ params, request }) => {
     endsAt: endsAt && new Date(endsAt),
   };
 
+  await admin.rest.post({
+    path: 'metafields.json',
+    data: {
+      metafield: {
+        namespace: 'discounts',
+        key: 'volume-discount',
+        type: "json",
+        value: JSON.stringify({
+          quantity: configuration.quantity,
+          percentage: configuration.percentage,
+        }),
+      }
+    }
+  });
+
   if (method === DiscountMethod.Code) {
     const baseCodeDiscount = {
       ...baseDiscount,
@@ -101,6 +116,7 @@ export const action = async ({ params, request }) => {
     );
 
     const responseJson = await response.json();
+
     const errors = responseJson.data.discountCreate?.userErrors;
     return json({ errors });
   } else {
@@ -195,7 +211,10 @@ export default function VolumeNew() {
       appliesOncePerCustomer: useField(false),
       startDate: useField(todaysDate),
       endDate: useField(null),
-      configuration: {},
+      configuration: {
+        quantity: useField('1'),
+        percentage: useField('0'),
+      }
     },
     onSubmit: async (form) => {
       const discount = {
@@ -207,7 +226,10 @@ export default function VolumeNew() {
         appliesOncePerCustomer: form.appliesOncePerCustomer,
         startsAt: form.startDate,
         endsAt: form.endDate,
-        configuration: {},
+        configuration: {
+          quantity: parseInt(form.configuration.quantity),
+          percentage: parseFloat(form.configuration.percentage),
+        },
       };
 
       submitForm({ discount: JSON.stringify(discount) }, { method: "post" });
@@ -260,6 +282,24 @@ export default function VolumeNew() {
                 discountCode={discountCode}
                 discountMethod={discountMethod}
               />
+              <Card>
+                <BlockStack gap="3">
+                  <Text variant="headingMd" as="h2">
+                    Volume
+                  </Text>
+                  <TextField
+                    label="Minimum quantity"
+                    autoComplete="on"
+                    {...configuration.quantity}
+                  />
+                  <TextField
+                    label="Discount percentage"
+                    autoComplete="on"
+                    {...configuration.percentage}
+                    suffix="%"
+                  />
+                </BlockStack>
+              </Card>
               {discountMethod.value === DiscountMethod.Code && (
                 <UsageLimitsCard
                   totalUsageLimit={usageLimit}

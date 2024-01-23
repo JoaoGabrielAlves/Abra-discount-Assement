@@ -1,0 +1,27 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "abra-volume-discount-test"
+client_id = "970e4316e832f7edbb6354244739abd6"
+application_url = "https://wise-scientists-convention-agree.trycloudflare.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products, write_discounts"
+
+[auth]
+redirect_urls = [
+  "https://wise-scientists-convention-agree.trycloudflare.com/auth/callback",
+  "https://wise-scientists-convention-agree.trycloudflare.com/auth/shopify/callback",
+  "https://wise-scientists-convention-agree.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2024-01"
+
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "zapiet-joao-po-preview.myshopify.com"
