@@ -5,6 +5,7 @@ class DiscountManager {
       volumeDiscount,
       format,
       product,
+      variantId,
       currentTemplate
     } = window.DiscountPrototype;
 
@@ -13,7 +14,7 @@ class DiscountManager {
     this.format = format;
     this.product = product;
     this.productId = product?.id;
-    this.variantId = product?.variant_id;
+    this.variantId = variantId;
     this.currentTemplate = currentTemplate;
     this.amountRegex = /\{\{.*?\}\}/;
   }
