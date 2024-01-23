@@ -12,8 +12,8 @@ class DiscountManager {
     this.volumeDiscount = volumeDiscount;
     this.format = format;
     this.product = product;
-    this.productId = product.id;
-    this.variantId = product.variant_id;
+    this.productId = product?.id;
+    this.variantId = product?.variant_id;
     this.currentTemplate = currentTemplate;
     this.amountRegex = /\{\{.*?\}\}/;
   }
@@ -250,7 +250,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         window.DiscountPrototype.cartItems = cart.items
 
-        applyDiscounts();
+        setTimeout(() => {
+          applyDiscounts();
+        }, 200)
       }
     }
   });
