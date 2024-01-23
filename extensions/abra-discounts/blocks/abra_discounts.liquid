@@ -4,7 +4,7 @@
     const volumeDiscount = {{ shop.metafields.discounts.volume-discount.value | json }};
     const format = {{ shop.money_format | json }};
     const currentTemplate = {{ template.name | json }};
-    const productId = {{ product.id | json }};
+    const product = {{ product | json }};
     let variantId = {{ product.selected_or_first_available_variant.id | json }};
 
     window.DiscountPrototype = {
@@ -12,7 +12,7 @@
       volumeDiscount: volumeDiscount,
       format: format,
       currentTemplate: currentTemplate,
-      productId: productId,
+      product: product,
       variantId: variantId
     };
   })();

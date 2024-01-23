@@ -4,21 +4,18 @@ class DiscountManager {
       cartItems,
       volumeDiscount,
       format,
-      productId,
-      variantId,
+      product,
       currentTemplate
     } = window.DiscountPrototype;
 
     this.cartItems = cartItems;
     this.volumeDiscount = volumeDiscount;
     this.format = format;
-    this.productId = productId;
-    this.variantId = variantId;
+    this.product = product;
+    this.productId = product.id;
+    this.variantId = product.variant_id;
     this.currentTemplate = currentTemplate;
-  }
-
-  getCurrentTemplate() {
-    return this.currentTemplate
+    this.amountRegex = /\{\{.*?\}\}/;
   }
 
   formatMoney(price) {
@@ -29,18 +26,23 @@ class DiscountManager {
   }
 
   applyDiscount(priceContainer, lineItem) {
-    const regex = /\{\{.*?\}\}/;
-
     if (lineItem?.quantity >= this.volumeDiscount.quantity) {
       const originalPrice = lineItem.original_price;
       const discountAmount = Math.floor(originalPrice * (this.volumeDiscount.percentage / 100));
       const finalPrice = originalPrice - discountAmount;
 
-      const formattedOriginalPrice = this.format.replace(regex, this.formatMoney(originalPrice));
-      const formattedFinalPrice = this.format.replace(regex, this.formatMoney(finalPrice));
+      const formattedOriginalPrice = this.format.replace(this.amountRegex, this.formatMoney(originalPrice));
+      const formattedFinalPrice = this.format.replace(this.amountRegex, this.formatMoney(finalPrice));
 
       this.applyDiscountToContainer(priceContainer, { formattedOriginalPrice, formattedFinalPrice });
     }
+  }
+
+  removeDiscount(priceContainer, originalPrice)
+  {
+    const formattedOriginalPrice = this.format.replace(this.amountRegex, this.formatMoney(originalPrice));
+
+    this.removeDiscountFromContainer(priceContainer, formattedOriginalPrice)
   }
 
   applyDiscountToContainer(priceContainer, formattedPrices) {
@@ -67,6 +69,32 @@ class DiscountManager {
         </div>
       </div>`;
   }
+
+  removeDiscountFromContainer(priceContainer, originalPrice)
+  {
+    priceContainer.innerHTML = `<div class="price price--large price--show-badge"">
+        <div class="price__container">
+          <div class="price__regular">
+            <span class="visually-hidden visually-hidden--inline">Regular price</span>
+            <span class="price-item price-item--regular">
+              ${originalPrice}
+            </span>
+          </div>
+          <div class="price__sale">
+            <span class="visually-hidden visually-hidden--inline">Regular price</span>
+            <span>
+              <s class="price-item price-item--regular">
+                ${originalPrice}
+              </s>
+            </span>
+            <span class="visually-hidden visually-hidden--inline">Sale price</span>
+            <span class="price-item price-item--sale price-item--last">
+
+            </span>
+          </div>
+        </div>
+      </div>`;
+  }
 }
 
 class ProductDiscountManager extends DiscountManager {
@@ -86,6 +114,13 @@ class ProductDiscountManager extends DiscountManager {
     const priceContainer = document.querySelector('#MainContent .price:not(.price--end)');
 
     this.applyDiscount(priceContainer, line);
+  }
+
+  removeProductDiscount()
+  {
+    const priceContainer = document.querySelector('#MainContent .price:not(.price--end)');
+
+    this.removeDiscount( priceContainer, this.product.price);
   }
 }
 
@@ -174,23 +209,51 @@ class CollectionDiscountManager extends DiscountManager {
   }
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-  const productDiscountManager = new ProductDiscountManager();
+function applyDiscounts() {
+  if (window.DiscountPrototype.currentTemplate === 'product') {
+    const productDiscountManager = new ProductDiscountManager();
 
-  if (productDiscountManager.getCurrentTemplate() === 'product') {
     productDiscountManager.applyProductDiscount();
+
+    window.history.replaceState = new Proxy(window.history.replaceState, {
+      apply: (target, thisArg, argArray) => {
+        setTimeout(() => {
+          productDiscountManager.applyProductDiscount();
+        }, 500);
+
+        return target.apply(thisArg, argArray);
+      },
+    });
   }
-
-  window.history.replaceState = new Proxy(window.history.replaceState, {
-    apply: (target, thisArg, argArray) => {
-      setTimeout(() => {
-        productDiscountManager.applyProductDiscount();
-      }, 500);
-
-      return target.apply(thisArg, argArray);
-    },
-  });
 
   const collectionDiscountManager = new CollectionDiscountManager();
   collectionDiscountManager.applyCollectionDiscount();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  applyDiscounts();
+
+  const cartObserver = new PerformanceObserver(async (list) => {
+    for (const entry of list.getEntries()) {
+      const isValidRequestType = ['xmlhttprequest', 'fetch'].includes(entry.initiatorType);
+      const isCartChangeRequest = /\/cart\//.test(entry.name);
+
+      if (isValidRequestType && isCartChangeRequest) {
+        const response = await fetch('/cart.js');
+        const cart = await response.json();
+
+        if (window.DiscountPrototype.currentTemplate === 'product') {
+          const productDiscountManager = new ProductDiscountManager();
+
+          productDiscountManager.removeProductDiscount();
+        }
+
+        window.DiscountPrototype.cartItems = cart.items
+
+        applyDiscounts();
+      }
+    }
+  });
+
+  cartObserver.observe({ entryTypes: ["resource"] });
 });
