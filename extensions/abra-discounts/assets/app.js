@@ -13,7 +13,6 @@ class DiscountManager {
     this.volumeDiscount = volumeDiscount;
     this.format = format;
     this.product = product;
-    this.productId = product?.id;
     this.variantId = variantId;
     this.currentTemplate = currentTemplate;
     this.amountRegex = /\{\{.*?\}\}/;
@@ -115,7 +114,7 @@ class DiscountManager {
 class ProductDiscountManager extends DiscountManager {
   getProductLineItem() {
     return this.cartItems.find(
-      (lineItem) => lineItem.product_id === this.productId && lineItem.variant_id === this.variantId
+      (lineItem) => lineItem.product_id === this.product.id && lineItem.variant_id === this.variantId
     );
   }
 
