@@ -39,58 +39,64 @@ class DiscountManager {
     }
   }
 
-  removeDiscount(priceContainer, originalPrice)
+  removeDiscount(priceContainer, {compareAtPrice, originalPrice})
   {
+    const formattedCompareAtPrice = this.format.replace(this.amountRegex, this.formatMoney(compareAtPrice));
     const formattedOriginalPrice = this.format.replace(this.amountRegex, this.formatMoney(originalPrice));
 
-    this.removeDiscountFromContainer(priceContainer, formattedOriginalPrice)
+    this.removeDiscountFromContainer(priceContainer, {
+      formattedOriginalPrice,
+      formattedCompareAtPrice
+    })
   }
 
-  applyDiscountToContainer(priceContainer, formattedPrices) {
+  applyDiscountToContainer(priceContainer, {formattedOriginalPrice, formattedFinalPrice}) {
     priceContainer.innerHTML = `<div class="price price--on-sale">
         <div class="price__container">
           <div class="price__regular">
             <span class="visually-hidden visually-hidden--inline">Regular price</span>
             <span class="price-item price-item--regular">
-              ${formattedPrices.formattedOriginalPrice}
+              ${formattedOriginalPrice}
             </span>
           </div>
           <div class="price__sale">
             <span class="visually-hidden visually-hidden--inline">Regular price</span>
             <span>
               <s class="price-item price-item--regular">
-                ${formattedPrices.formattedOriginalPrice}
+                ${formattedOriginalPrice}
               </s>
             </span>
             <span class="visually-hidden visually-hidden--inline">Sale price</span>
             <span class="price-item price-item--sale price-item--last">
-              ${formattedPrices.formattedFinalPrice}
+              ${formattedFinalPrice}
             </span>
           </div>
         </div>
       </div>`;
   }
 
-  removeDiscountFromContainer(priceContainer, originalPrice)
-  {
+  removeDiscountFromContainer(priceContainer, {
+    formattedOriginalPrice,
+    formattedCompareAtPrice
+  }) {
     priceContainer.innerHTML = `<div class="price price--large price--show-badge"">
         <div class="price__container">
           <div class="price__regular">
             <span class="visually-hidden visually-hidden--inline">Regular price</span>
             <span class="price-item price-item--regular">
-              ${originalPrice}
+              ${formattedOriginalPrice}
             </span>
           </div>
           <div class="price__sale">
             <span class="visually-hidden visually-hidden--inline">Regular price</span>
             <span>
               <s class="price-item price-item--regular">
-                ${originalPrice}
+                ${formattedOriginalPrice}
               </s>
             </span>
             <span class="visually-hidden visually-hidden--inline">Sale price</span>
             <span class="price-item price-item--sale price-item--last">
-
+                ${formattedCompareAtPrice}
             </span>
           </div>
         </div>
@@ -121,7 +127,13 @@ class ProductDiscountManager extends DiscountManager {
   {
     const priceContainer = document.querySelector('#MainContent .price:not(.price--end)');
 
-    this.removeDiscount( priceContainer, this.product.price);
+    const compareAtPrice = this.product.compare_at_price
+    const originalPrice = this.product.price
+
+    this.removeDiscount(priceContainer, {
+      compareAtPrice,
+      originalPrice
+    });
   }
 }
 
