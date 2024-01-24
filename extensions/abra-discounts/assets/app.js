@@ -299,9 +299,7 @@ document.addEventListener('DOMContentLoaded', function () {
           collectionDiscountManager.setCartItems(cart.items);
           productDiscountManager.setCartItems(cart.items);
 
-          setTimeout(() => {
-            applyDiscounts(collectionDiscountManager, productDiscountManager);
-          }, 200)
+          applyDiscounts(collectionDiscountManager, productDiscountManager);
         } catch (error) {
           console.error('Error fetching cart data:', error);
         }
