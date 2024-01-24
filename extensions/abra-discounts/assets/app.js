@@ -79,28 +79,22 @@ class DiscountManager {
     formattedOriginalPrice,
     formattedCompareAtPrice
   }) {
-    priceContainer.innerHTML = `<div class="price price--large price--show-badge"">
+    priceContainer.innerHTML = `
+      <div class="price ${this.currentTemplate === 'product' ? 'price--large price--show-badge' : ''}">
         <div class="price__container">
           <div class="price__regular">
             <span class="visually-hidden visually-hidden--inline">Regular price</span>
-            <span class="price-item price-item--regular">
-              ${formattedOriginalPrice}
-            </span>
+            <span class="price-item price-item--regular">${formattedOriginalPrice}</span>
           </div>
           <div class="price__sale">
             <span class="visually-hidden visually-hidden--inline">Regular price</span>
-            <span>
-              <s class="price-item price-item--regular">
-                ${formattedOriginalPrice}
-              </s>
-            </span>
+            <span><s class="price-item price-item--regular">${formattedOriginalPrice}</s></span>
             <span class="visually-hidden visually-hidden--inline">Sale price</span>
-            <span class="price-item price-item--sale price-item--last">
-                ${formattedCompareAtPrice}
-            </span>
+            <span class="price-item price-item--sale price-item--last">${formattedCompareAtPrice}</span>
           </div>
         </div>
-      </div>`;
+      </div>
+    `;
   }
 }
 
@@ -138,6 +132,12 @@ class ProductDiscountManager extends DiscountManager {
 }
 
 class CollectionDiscountManager extends DiscountManager {
+  constructor() {
+    super()
+
+    this.products = {}
+  }
+
   findProductHandles() {
     let productsHandles = new Set();
 
@@ -167,9 +167,10 @@ class CollectionDiscountManager extends DiscountManager {
     return Array.from(productsHandles);
   }
 
-  async getDefaultVariantByProductHandle(item) {
-    // It would be nice to have some caching logic.
-    const productHandle = item.handle;
+  async fetchProductByHandle(productHandle) {
+    if (productHandle in this.products) {
+      return this.products[productHandle]
+    }
 
     const response = await fetch(window.Shopify.routes.root + `products/${productHandle}.js`, {
       headers: { "Content-Type": "application/json" }
@@ -177,7 +178,9 @@ class CollectionDiscountManager extends DiscountManager {
 
     const productData = await response.json();
 
-    return productData.variants[0]
+    this.products[productHandle] = productData
+
+    return productData
   }
 
   async filterDiscountedItems(handleArray) {
@@ -194,15 +197,20 @@ class CollectionDiscountManager extends DiscountManager {
       return isHandleIncluded && isQuantityValid;
     });
 
-    const productVariant = await Promise.all(itemsWithDiscount.map(item => this.getDefaultVariantByProductHandle(item)));
+    const productVariants = await Promise.all(itemsWithDiscount.map(item => this.fetchProductByHandle(item.handle)))
+      .then(products => products.map(product => product.variants[0]))
+      .catch(error => {
+        console.error('Error fetching product variants:', error);
+      });
 
-    const productVariantIds = productVariant.map(variant => variant.id)
+    const productVariantIds = productVariants.map(variant => variant.id)
 
     // The discount is applied to the variant, so we need to make sure the correct variant has the discount before applying it.
     return itemsWithDiscount.filter((item) => {
       return productVariantIds.includes(item.variant_id)
     })
   }
+
   applyDiscountsToCartItems(cartItems) {
     cartItems.forEach((item) => {
       const priceContainer = document.querySelector(
@@ -220,9 +228,35 @@ class CollectionDiscountManager extends DiscountManager {
     const discountedItems = await this.filterDiscountedItems(handleArray);
     this.applyDiscountsToCartItems(discountedItems);
   }
+
+  removeCollectionDiscount() {
+    const priceContainers = document.querySelectorAll('[price-container]');
+
+    priceContainers.forEach((priceContainer) => {
+      const productHandle = priceContainer.getAttribute('price-container');
+
+      let product = {}
+
+      if (productHandle in this.products) {
+        product = this.products[productHandle];
+
+        const compareAtPrice = product.compare_at_price
+        const originalPrice = product.price
+
+        this.removeDiscount(priceContainer, {
+          compareAtPrice,
+          originalPrice
+        });
+      }
+    })
+  }
 }
 
 function applyDiscounts() {
+  const collectionDiscountManager = new CollectionDiscountManager();
+
+  collectionDiscountManager.applyCollectionDiscount();
+
   if (window.DiscountPrototype.currentTemplate === 'product') {
     const productDiscountManager = new ProductDiscountManager();
 
@@ -237,14 +271,16 @@ function applyDiscounts() {
         return target.apply(thisArg, argArray);
       },
     });
+
+    return {productDiscountManager, collectionDiscountManager}
   }
 
-  const collectionDiscountManager = new CollectionDiscountManager();
-  collectionDiscountManager.applyCollectionDiscount();
+
+  return {collectionDiscountManager: collectionDiscountManager}
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-  applyDiscounts();
+  const {productDiscountManager, collectionDiscountManager} = applyDiscounts();
 
   const cartObserver = new PerformanceObserver(async (list) => {
     for (const entry of list.getEntries()) {
@@ -252,20 +288,24 @@ document.addEventListener('DOMContentLoaded', function () {
       const isCartChangeRequest = /\/cart\//.test(entry.name);
 
       if (isValidRequestType && isCartChangeRequest) {
-        const response = await fetch('/cart.js');
-        const cart = await response.json();
+        try {
+          const response = await fetch('/cart.js');
+          const cart = await response.json();
 
-        if (window.DiscountPrototype.currentTemplate === 'product') {
-          const productDiscountManager = new ProductDiscountManager();
+          if (window.DiscountPrototype.currentTemplate === 'product') {
+            productDiscountManager?.removeProductDiscount();
+          }
 
-          productDiscountManager.removeProductDiscount();
+          collectionDiscountManager.removeCollectionDiscount();
+
+          window.DiscountPrototype.cartItems = cart.items
+
+          setTimeout(() => {
+            applyDiscounts();
+          }, 200)
+        } catch (error) {
+          console.error('Error fetching cart data:', error);
         }
-
-        window.DiscountPrototype.cartItems = cart.items
-
-        setTimeout(() => {
-          applyDiscounts();
-        }, 200)
       }
     }
   });

@@ -2,7 +2,7 @@
 
 name = "abra-volume-discount-test"
 client_id = "970e4316e832f7edbb6354244739abd6"
-application_url = "https://hypothetical-mixture-css-marriott.trycloudflare.com"
+application_url = "https://biographies-fill-parameter-duty.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_products, write_discounts"
 
 [auth]
 redirect_urls = [
-  "https://hypothetical-mixture-css-marriott.trycloudflare.com/auth/callback",
-  "https://hypothetical-mixture-css-marriott.trycloudflare.com/auth/shopify/callback",
-  "https://hypothetical-mixture-css-marriott.trycloudflare.com/api/auth/callback"
+  "https://biographies-fill-parameter-duty.trycloudflare.com/auth/callback",
+  "https://biographies-fill-parameter-duty.trycloudflare.com/auth/shopify/callback",
+  "https://biographies-fill-parameter-duty.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
