@@ -19,6 +19,10 @@ class DiscountManager {
     this.amountRegex = /\{\{.*?\}\}/;
   }
 
+  setCartItems(cartItems) {
+    this.cartItems = cartItems
+  }
+
   formatMoney(price) {
     price = (price / 100).toFixed(2);
 
@@ -252,14 +256,10 @@ class CollectionDiscountManager extends DiscountManager {
   }
 }
 
-function applyDiscounts() {
-  const collectionDiscountManager = new CollectionDiscountManager();
-
+function applyDiscounts(collectionDiscountManager, productDiscountManager) {
   collectionDiscountManager.applyCollectionDiscount();
 
   if (window.DiscountPrototype.currentTemplate === 'product') {
-    const productDiscountManager = new ProductDiscountManager();
-
     productDiscountManager.applyProductDiscount();
 
     window.history.replaceState = new Proxy(window.history.replaceState, {
@@ -271,16 +271,14 @@ function applyDiscounts() {
         return target.apply(thisArg, argArray);
       },
     });
-
-    return {productDiscountManager, collectionDiscountManager}
   }
-
-
-  return {collectionDiscountManager: collectionDiscountManager}
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-  const {productDiscountManager, collectionDiscountManager} = applyDiscounts();
+  const collectionDiscountManager = new CollectionDiscountManager();
+  const productDiscountManager = new ProductDiscountManager();
+
+  applyDiscounts(collectionDiscountManager, productDiscountManager);
 
   const cartObserver = new PerformanceObserver(async (list) => {
     for (const entry of list.getEntries()) {
@@ -293,15 +291,16 @@ document.addEventListener('DOMContentLoaded', function () {
           const cart = await response.json();
 
           if (window.DiscountPrototype.currentTemplate === 'product') {
-            productDiscountManager?.removeProductDiscount();
+            productDiscountManager.removeProductDiscount();
           }
 
           collectionDiscountManager.removeCollectionDiscount();
 
-          window.DiscountPrototype.cartItems = cart.items
+          collectionDiscountManager.setCartItems(cart.items);
+          productDiscountManager.setCartItems(cart.items);
 
           setTimeout(() => {
-            applyDiscounts();
+            applyDiscounts(collectionDiscountManager, productDiscountManager);
           }, 200)
         } catch (error) {
           console.error('Error fetching cart data:', error);
