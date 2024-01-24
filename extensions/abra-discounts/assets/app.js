@@ -17,10 +17,20 @@ class DiscountManager {
     this.variantId = variantId;
     this.currentTemplate = currentTemplate;
     this.amountRegex = /\{\{.*?\}\}/;
+
+    this.setVariantIdByUrl();
   }
 
   setCartItems(cartItems) {
     this.cartItems = cartItems
+  }
+
+  setVariantIdByUrl() {
+    const urlSearchParams = new URLSearchParams(window.location.search);
+
+    if (urlSearchParams.get('variant')) {
+      this.variantId = Number(urlSearchParams.get('variant'));
+    }
   }
 
   formatMoney(price) {
@@ -104,34 +114,38 @@ class DiscountManager {
 
 class ProductDiscountManager extends DiscountManager {
   getProductLineItem() {
-    const urlSearchParams = new URLSearchParams(window.location.search);
-    if (urlSearchParams.get('variant')) {
-      this.variantId = urlSearchParams.get('variant');
-    }
-
     return this.cartItems.find(
-      (lineItem) => lineItem.product_id === this.productId && lineItem.variant_id === Number(this.variantId)
+      (lineItem) => lineItem.product_id === this.productId && lineItem.variant_id === this.variantId
     );
   }
 
   applyProductDiscount() {
-    const line = this.getProductLineItem();
-    const priceContainer = document.querySelector('#MainContent .price:not(.price--end)');
+    this.setVariantIdByUrl();
 
-    this.applyDiscount(priceContainer, line);
+    const line = this.getProductLineItem();
+
+    if (line) {
+      const priceContainer = document.querySelector('#MainContent .price:not(.price--end)');
+
+      this.applyDiscount(priceContainer, line);
+    }
   }
 
   removeProductDiscount()
   {
     const priceContainer = document.querySelector('#MainContent .price:not(.price--end)');
 
-    const compareAtPrice = this.product.compare_at_price
-    const originalPrice = this.product.price
+    const variant = this.product.variants.find(variant => variant.id === this.variantId)
 
-    this.removeDiscount(priceContainer, {
-      compareAtPrice,
-      originalPrice
-    });
+    if (variant) {
+      const compareAtPrice = variant.compare_at_price
+      const originalPrice = variant.price
+
+      this.removeDiscount(priceContainer, {
+        compareAtPrice,
+        originalPrice
+      });
+    }
   }
 }
 
@@ -193,7 +207,7 @@ class CollectionDiscountManager extends DiscountManager {
       const isQuantityValid = item.quantity >= this.volumeDiscount.quantity;
 
       if (this.currentTemplate === "product") {
-        const isVariantValid = !this.variantId || Number(item.variant_id) !== Number(this.variantId);
+        const isVariantValid = !this.variantId || item.variant_id !== this.variantId;
 
         return isHandleIncluded && isQuantityValid && isVariantValid;
       }

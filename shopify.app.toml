@@ -2,7 +2,7 @@
 
 name = "abra-volume-discount-test"
 client_id = "970e4316e832f7edbb6354244739abd6"
-application_url = "https://floor-nt-children-meet.trycloudflare.com"
+application_url = "https://selected-birthday-maximum-songs.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_products, write_discounts"
 
 [auth]
 redirect_urls = [
-  "https://floor-nt-children-meet.trycloudflare.com/auth/callback",
-  "https://floor-nt-children-meet.trycloudflare.com/auth/shopify/callback",
-  "https://floor-nt-children-meet.trycloudflare.com/api/auth/callback"
+  "https://selected-birthday-maximum-songs.trycloudflare.com/auth/callback",
+  "https://selected-birthday-maximum-songs.trycloudflare.com/auth/shopify/callback",
+  "https://selected-birthday-maximum-songs.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
