@@ -167,7 +167,7 @@ class CollectionDiscountManager extends DiscountManager {
     return Array.from(productsHandles);
   }
 
-  async fetchProductByHandle(item) {
+  async getDefaultVariantByProductHandle(item) {
     // It would be nice to have some caching logic.
     const productHandle = item.handle;
 
@@ -194,7 +194,7 @@ class CollectionDiscountManager extends DiscountManager {
       return isHandleIncluded && isQuantityValid;
     });
 
-    const productVariant = await Promise.all(itemsWithDiscount.map(item => this.fetchProductByHandle(item)));
+    const productVariant = await Promise.all(itemsWithDiscount.map(item => this.getDefaultVariantByProductHandle(item)));
 
     const productVariantIds = productVariant.map(variant => variant.id)
 
