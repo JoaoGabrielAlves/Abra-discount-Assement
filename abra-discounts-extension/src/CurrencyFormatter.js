@@ -1,5 +1,9 @@
 class CurrencyFormatter {
-  constructor(format) {
+  constructor() {
+    const {
+      format
+    } = window.DiscountPrototype;
+
     this.format = format;
   }
 

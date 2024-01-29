@@ -1,6 +1,28 @@
 import Discount from "../Discount";
 
 class ProductDiscountManager extends Discount {
+  constructor() {
+    super();
+
+    const {
+      product,
+      variantId,
+    } = window.DiscountPrototype;
+
+    this.product = product;
+    this.variantId = variantId;
+
+    this.setVariantIdByUrl();
+  }
+
+  setVariantIdByUrl() {
+    const urlSearchParams = new URLSearchParams(window.location.search);
+
+    if (urlSearchParams.get('variant')) {
+      this.variantId = Number(urlSearchParams.get('variant'));
+    }
+  }
+
   getProductLineItem() {
     return this.cartItems.find(
       (lineItem) => lineItem.product_id === this.product.id && lineItem.variant_id === this.variantId

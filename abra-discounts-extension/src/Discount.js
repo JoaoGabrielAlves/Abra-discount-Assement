@@ -5,34 +5,18 @@ class Discount {
     const {
       cartItems,
       volumeDiscount,
-      format,
-      product,
-      variantId,
       currentTemplate
     } = window.DiscountPrototype;
 
-    this.currencyFormat = new CurrencyFormatter(format);
-
     this.cartItems = cartItems;
     this.volumeDiscount = volumeDiscount;
-    this.format = format;
-    this.product = product;
-    this.variantId = variantId;
     this.currentTemplate = currentTemplate;
 
-    this.setVariantIdByUrl();
+    this.currencyFormat = new CurrencyFormatter();
   }
 
   setCartItems(cartItems) {
     this.cartItems = cartItems
-  }
-
-  setVariantIdByUrl() {
-    const urlSearchParams = new URLSearchParams(window.location.search);
-
-    if (urlSearchParams.get('variant')) {
-      this.variantId = Number(urlSearchParams.get('variant'));
-    }
   }
 
   applyDiscount(priceContainer, lineItem) {
